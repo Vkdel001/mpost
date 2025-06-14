@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import re
 import os
+import datetime
 
 raw_text = sys.stdin.read()
 pages = re.split(r'\*\*Page \d+\*\*', raw_text)
@@ -23,15 +24,21 @@ for i, page in enumerate(pages[1:], start=1):
     for k, v in match_dict.items():
         try:
             value = v.group(1).strip().replace('\n', ', ') if v else ''
-        except Exception as e:
+        except Exception:
             value = ''
         row[k] = value
     data.append(row)
 
-df = pd.DataFrame(data)
+# ✅ Create a unique filename using timestamp
+timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+file_name = f'report_{timestamp}.xlsx'
 output_dir = 'public'
 os.makedirs(output_dir, exist_ok=True)
-file_path = os.path.join(output_dir, 'report.xlsx')
+file_path = os.path.join(output_dir, file_name)
+
+# ✅ Create and save the Excel file
+df = pd.DataFrame(data)
 df.to_excel(file_path, index=False)
 
-print(f"✅ Excel report created and saved to: {file_path}")
+# ✅ Print only the filename for Node.js to capture
+print(file_name)

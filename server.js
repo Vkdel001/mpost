@@ -35,11 +35,12 @@ app.post('/webhook', (req, res) => {
     });
 
     python.on('close', (code) => {
-        const fileUrl = `${req.protocol}://${req.get('host')}/files/report.xlsx`;
+        const fileName = output.trim(); // output should be just the file name like "report_20250614_161045.xlsx"
+        const fileUrl = `${req.protocol}://${req.get('host')}/files/${fileName}`;
         res.send({
             message: '✅ Excel report created successfully.',
             download_url: fileUrl,
-            details: output.trim()
+            filename: fileName
         });
     });
 });
