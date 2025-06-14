@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import re
+import os
 
 raw_text = sys.stdin.read()
 pages = re.split(r'\*\*Page \d+\*\*', raw_text)
@@ -28,7 +29,9 @@ for i, page in enumerate(pages[1:], start=1):
     data.append(row)
 
 df = pd.DataFrame(data)
-file_path = 'report.xlsx'
+output_dir = 'public'
+os.makedirs(output_dir, exist_ok=True)
+file_path = os.path.join(output_dir, 'report.xlsx')
 df.to_excel(file_path, index=False)
 
-print(f"✅ Excel report created: {file_path} with {len(df)} rows")
+print(f"✅ Excel report created and saved to: {file_path}")

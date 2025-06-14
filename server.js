@@ -1,50 +1,35 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
 require('dotenv').config();
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.text({ type: '*/*' }));
 
+// 🔥 Serve Excel file from /public as /files
+app.use('/files', express.static(path.join(__dirname, 'public')));
+
 app.post('/webhook', (req, res) => {
-    const python = spawn('python3', ['process_and_email.py']);
+    const python = spawn('python3', ['process_and_email.py']); // or 'python' depending on environment
     python.stdin.write(req.body);
     python.stdin.end();
 
-    let pythonOutput = '';
-    let pythonError = '';
-
+    let output = '';
     python.stdout.on('data', (data) => {
-        pythonOutput += data.toString();
+        output += data.toString();
         console.log(`Python output: ${data}`);
     });
 
     python.stderr.on('data', (data) => {
-        pythonError += data.toString();
         console.error(`Python error: ${data}`);
     });
 
     python.on('close', (code) => {
-        if (code !== 0) {
-            return res.status(500).send(`Python script failed with code ${code}\n${pythonError}`);
-        }
-
-        // Read the generated Excel file
-        const filePath = path.join(__dirname, 'report.xlsx');
-
-        fs.readFile(filePath, (err, fileData) => {
-            if (err) {
-                console.error('Error reading Excel file:', err);
-                return res.status(500).send('Failed to read Excel file');
-            }
-
-            // Set headers to prompt download
-            res.setHeader('Content-Disposition', 'attachment; filename=report.xlsx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-
-            res.send(fileData);
+        const fileUrl = `${req.protocol}://${req.get('host')}/files/report.xlsx`;
+        res.send({
+            message: '✅ Excel report created successfully.',
+            download_url: fileUrl
         });
     });
 });
