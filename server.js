@@ -5,14 +5,23 @@ require('dotenv').config();
 const path = require('path');
 
 const app = express();
-app.use(bodyParser.text({ type: '*/*' }));
 
-// 🔥 Serve Excel file from /public as /files
+// Accept JSON input (e.g., { "rawText": "..." })
+app.use(bodyParser.json());
+
+// Serve static files like the Excel report
 app.use('/files', express.static(path.join(__dirname, 'public')));
 
 app.post('/webhook', (req, res) => {
-    const python = spawn('python3', ['process_and_email.py']); // or 'python' depending on environment
-    python.stdin.write(req.body);
+    const rawText = req.body.rawText;
+
+    if (!rawText) {
+        return res.status(400).send({ error: 'Missing rawText in JSON payload' });
+    }
+
+    const python = spawn('python3', ['process_and_email.py']);
+
+    python.stdin.write(rawText);
     python.stdin.end();
 
     let output = '';
@@ -29,7 +38,8 @@ app.post('/webhook', (req, res) => {
         const fileUrl = `${req.protocol}://${req.get('host')}/files/report.xlsx`;
         res.send({
             message: '✅ Excel report created successfully.',
-            download_url: fileUrl
+            download_url: fileUrl,
+            details: output.trim()
         });
     });
 });
