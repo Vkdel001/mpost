@@ -5,6 +5,8 @@ import os
 import datetime
 
 raw_text = sys.stdin.read()
+raw_text = raw_text.encode('utf-8').decode('utf-8')  # force utf-8
+
 pages = re.split(r'\*\*Page \d+\*\*', raw_text)
 data = []
 
