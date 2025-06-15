@@ -22,7 +22,7 @@ for line in lines:
         continue
 
     # New Page
-    if line.lower().startswith("page"):
+    if re.match(r'[#\*\s]*page\s+\d+', line.lower()):
         # Save any existing postage block
         if current_postage:
             row = {**shared_fields, **current_postage}
