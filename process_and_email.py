@@ -10,30 +10,32 @@ lines = raw_text.splitlines()
 rows = []
 shared_fields = {}
 current_postage = {}
+current_section = None
 
 def extract_amount(line):
     match = re.search(r'(\d+)', line)
     return match.group(1) if match else ''
-
-current_section = None
 
 for line in lines:
     line = line.strip()
     if not line:
         continue
 
-    if line.lower().startswith("**page"):
-        # If there's a previous postage block, save it before moving to new page
+    # New Page
+    if line.lower().startswith("page"):
+        # Save any existing postage block
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
             current_postage = {}
-
+        # Reset shared fields for new page
         shared_fields = {}
         shared_fields["Page"] = extract_amount(line)
+        continue
 
-    elif "Date" in line:
-        shared_fields["Date"] = extract_amount(line)
+    # Detect and assign shared fields
+    if "Date" in line and "Total" not in line:
+        shared_fields["Date"] = line.split(":", 1)[-1].strip()
 
     elif "Invoice Number" in line:
         shared_fields["Invoice No"] = extract_amount(line)
@@ -41,11 +43,11 @@ for line in lines:
     elif "MIN Number" in line:
         shared_fields["MIN No"] = extract_amount(line)
 
-    elif "Department" in line:
+    elif "Department Name" in line:
         shared_fields["Department"] = line.split(":", 1)[-1].strip()
 
     elif "Registered Postage" in line:
-        # Save previous section if exists
+        # Save previous block before switching
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
@@ -76,7 +78,7 @@ for line in lines:
     elif "Total Number of Letters Posted" in line:
         shared_fields["Total Letters"] = extract_amount(line)
 
-# Add last row if not yet saved
+# Save the last postage block after the final page
 if current_postage:
     row = {**shared_fields, **current_postage}
     rows.append(row)
