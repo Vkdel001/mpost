@@ -4,8 +4,17 @@ import os
 import datetime
 import re
 
+# Read input payload
 raw_text = sys.stdin.read()
 lines = raw_text.splitlines()
+
+# Log the input payload to a file
+timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+log_dir = "logs"
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"input_payload_{timestamp}.txt")
+with open(log_file, 'w') as f:
+    f.write(raw_text)
 
 rows = []
 shared_fields = {}
@@ -81,7 +90,6 @@ if current_postage:
     rows.append(row)
 
 # Save to Excel
-timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 file_name = f"report_{timestamp}.xlsx"
 output_dir = "public"
 os.makedirs(output_dir, exist_ok=True)
