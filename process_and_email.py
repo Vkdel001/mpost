@@ -84,7 +84,7 @@ if current_postage:
 # Save to Excel file
 timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 file_name = f"report_{timestamp}.xlsx"
-output_dir = "public"
+output_dir = "/tmp"  # ✅ Use /tmp for Railway or container-friendly path
 os.makedirs(output_dir, exist_ok=True)
 file_path = os.path.join(output_dir, file_name)
 
@@ -93,14 +93,18 @@ df.to_excel(file_path, index=False)
 
 print(f"📁 Excel saved as: {file_name}")
 
-# ✅ Upload to GoFile.io using your account token
+# ✅ Upload to GoFile.io using your token and folderId
 token = "HSl6SrcLB3j9dCCVcSHagTRD2jFaKkJO"
+folder_id = "a28d7050-3937-4669-97b6-2eaadf2773ee"  # ✅ Your correct root folder ID
 upload_url = "https://api.gofile.io/uploadFile"
 
 try:
     with open(file_path, "rb") as f:
         files = {"file": f}
-        data = {"token": token}
+        data = {
+            "token": token,
+            "folderId": folder_id
+        }
         response = requests.post(upload_url, files=files, data=data)
 
     result = response.json()
