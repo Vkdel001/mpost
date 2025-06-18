@@ -91,24 +91,27 @@ file_path = os.path.join(output_dir, file_name)
 df = pd.DataFrame(rows)
 df.to_excel(file_path, index=False)
 
-print(f"📁 Saved Excel file: {file_name}")
+print(f"📁 Excel saved as: {file_name}")
 
-# ✅ Upload to GoFile.io
+# ✅ Upload to GoFile.io using your account token
+token = "HSl6SrcLB3j9dCCVcSHagTRD2jFaKkJO"
 upload_url = "https://api.gofile.io/uploadFile"
 
 try:
     with open(file_path, "rb") as f:
-        response = requests.post(upload_url, files={"file": f})
+        files = {"file": f}
+        data = {"token": token}
+        response = requests.post(upload_url, files=files, data=data)
 
-    if response.status_code == 200:
-        result = response.json()
-        if result["status"] == "ok":
-            download_link = result["data"]["downloadPage"]
-            print("✅ File uploaded to GoFile.io")
-            print("🔗 Download Link:", download_link)
-        else:
-            print("❌ Upload failed:", result.get("status"))
+    result = response.json()
+    print("🔍 API Response:", result)
+
+    if result["status"] == "ok":
+        download_link = result["data"]["downloadPage"]
+        print("✅ File uploaded to GoFile.io")
+        print("🔗 Download Link:", download_link)
     else:
-        print(f"❌ HTTP Error: {response.status_code}")
+        print("❌ Upload failed:", result.get("status"))
+
 except Exception as e:
     print("❌ Error during upload:", str(e))
