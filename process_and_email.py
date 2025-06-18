@@ -3,14 +3,15 @@ import pandas as pd
 import os
 import datetime
 import re
+import requests
 
+# Read raw text input from stdin
 raw_text = sys.stdin.read()
 lines = raw_text.splitlines()
 
 rows = []
 shared_fields = {}
 current_postage = {}
-current_section = None
 
 def extract_amount(line):
     match = re.search(r'(\d+)', line)
@@ -23,12 +24,10 @@ for line in lines:
 
     # New Page
     if re.match(r'[#\*\s]*page\s+\d+', line.lower()):
-        # Save any existing postage block
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
             current_postage = {}
-        # Reset shared fields for new page
         shared_fields = {}
         shared_fields["Page"] = extract_amount(line)
         continue
@@ -47,7 +46,6 @@ for line in lines:
         shared_fields["Department"] = line.split(":", 1)[-1].strip()
 
     elif "Registered Postage" in line:
-        # Save previous block before switching
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
@@ -78,12 +76,12 @@ for line in lines:
     elif "Total Number of Letters Posted" in line:
         shared_fields["Total Letters"] = extract_amount(line)
 
-# Save the last postage block after the final page
+# Save last postage block
 if current_postage:
     row = {**shared_fields, **current_postage}
     rows.append(row)
 
-# Save to Excel
+# Save to Excel file
 timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 file_name = f"report_{timestamp}.xlsx"
 output_dir = "public"
@@ -93,4 +91,24 @@ file_path = os.path.join(output_dir, file_name)
 df = pd.DataFrame(rows)
 df.to_excel(file_path, index=False)
 
-print(file_name)
+print(f"📁 Saved Excel file: {file_name}")
+
+# ✅ Upload to GoFile.io
+upload_url = "https://api.gofile.io/uploadFile"
+
+try:
+    with open(file_path, "rb") as f:
+        response = requests.post(upload_url, files={"file": f})
+
+    if response.status_code == 200:
+        result = response.json()
+        if result["status"] == "ok":
+            download_link = result["data"]["downloadPage"]
+            print("✅ File uploaded to GoFile.io")
+            print("🔗 Download Link:", download_link)
+        else:
+            print("❌ Upload failed:", result.get("status"))
+    else:
+        print(f"❌ HTTP Error: {response.status_code}")
+except Exception as e:
+    print("❌ Error during upload:", str(e))
