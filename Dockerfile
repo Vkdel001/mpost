@@ -5,7 +5,7 @@ FROM node:20-bullseye
 RUN apt-get update && \
     apt-get install -y python3 python3-pip python3-dev build-essential && \
     pip3 install --upgrade pip && \
-    pip3 install pandas openpyxl
+    pip3 install pandas openpyxl requests
 
 # Create app directory
 WORKDIR /app
