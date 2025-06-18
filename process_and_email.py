@@ -96,7 +96,7 @@ print(f"📁 Excel saved as: {file_name}")
 # ✅ Upload to GoFile.io using your token and folderId
 token = "HSl6SrcLB3j9dCCVcSHagTRD2jFaKkJO"
 folder_id = "a28d7050-3937-4669-97b6-2eaadf2773ee"  # ✅ Your correct root folder ID
-upload_url = "https://api.gofile.io/uploadFile"
+upload_url = "https://upload.gofile.io/uploadfile"
 
 try:
     with open(file_path, "rb") as f:
