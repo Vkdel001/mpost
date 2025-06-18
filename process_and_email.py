@@ -13,7 +13,7 @@ current_postage = {}
 current_section = None
 
 def extract_amount(line):
-    match = re.search(r'(\d+\.?\d*)', line)  # Improved to handle decimals if needed
+    match = re.search(r'(\d+)', line)
     return match.group(1) if match else ''
 
 for line in lines:
@@ -21,12 +21,14 @@ for line in lines:
     if not line:
         continue
 
-    # New Page (match markdown-style headers like **Page X Report**)
-    if re.match(r'\*\*Page\s+\d+\s+Report\*\*', line, re.IGNORECASE):
+    # New Page
+    if re.match(r'[#\*\s]*page\s+\d+', line.lower()):
+        # Save any existing postage block
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
             current_postage = {}
+        # Reset shared fields for new page
         shared_fields = {}
         shared_fields["Page"] = extract_amount(line)
         continue
@@ -44,13 +46,14 @@ for line in lines:
     elif "Department Name" in line:
         shared_fields["Department"] = line.split(":", 1)[-1].strip()
 
-    elif "Registered Postage Section" in line:
+    elif "Registered Postage" in line:
+        # Save previous block before switching
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
         current_postage = {"Type": "Registered"}
 
-    elif "Express Postage Section" in line:
+    elif "Express Postage" in line:
         if current_postage:
             row = {**shared_fields, **current_postage}
             rows.append(row)
@@ -75,7 +78,7 @@ for line in lines:
     elif "Total Number of Letters Posted" in line:
         shared_fields["Total Letters"] = extract_amount(line)
 
-# Save the last postage block
+# Save the last postage block after the final page
 if current_postage:
     row = {**shared_fields, **current_postage}
     rows.append(row)
@@ -91,7 +94,3 @@ df = pd.DataFrame(rows)
 df.to_excel(file_path, index=False)
 
 print(file_name)
-
-
- 
-
